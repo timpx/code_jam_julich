@@ -25,7 +25,7 @@ half = {u: u + dt*du for u, du in ddt.iteritems()}
 heun = [u + (du + du.subs(half))*dt/2 for u, du in half.iteritems()]
 
 # Then, ask sympy to perform common subexpression elimination, or `cse`, so that we don't compute the same thing multiple times
-aux, exs = cse(heun, optimizations='basic', order='none')
+aux, exs = cse(heun)
 for l, r in aux:
     print l, '<-', r
 for u, ex in zip(ddt.keys(), exs):
@@ -35,7 +35,7 @@ for u, ex in zip(ddt.keys(), exs):
 
 # Here we want to change the kernel
 template = '''
-function([X, DX, dt, a, tau], [X])
+function([X, DX, dt, Param(a, default=, tau], [X])
 {{
     int step;
     {decl}
