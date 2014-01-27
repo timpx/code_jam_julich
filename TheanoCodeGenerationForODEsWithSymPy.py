@@ -1,30 +1,16 @@
 # -*- coding: utf-8 -*-
-# <nbformat>3.0</nbformat>
+# Generating theano for integrating differential equation systems
 
-# <headingcell level=1>
-
-# Generating OpenCL for integrating differential equation systems
-
-# <codecell>
-
-#%pylab inline
 from pylab import *
-
-# <codecell>
 
 from sympy import *
 from sympy.tensor import IndexedBase, Idx
 
-# <codecell>
-
 symbols('dt')==symbols('dt')
 
-# <markdowncell>
+
 
 # Start with a simple oscillator model
-
-# <codecell>
-
 x, y, dt, tau, a = symbols('x y dt tau a')
 
 ddt = {
@@ -32,35 +18,24 @@ ddt = {
     y: (a - x)/tau
 }
 
-# <markdowncell>
+
 
 # Form the "half" step, and then the full step for the Heun method
-
-# <codecell>
-
 half = {u: u + dt*du for u, du in ddt.iteritems()}
 heun = [u + (du + du.subs(half))*dt/2 for u, du in half.iteritems()]
 
-# <markdowncell>
-
 # Then, ask sympy to perform common subexpression elimination, or `cse`, so that we don't compute the same thing multiple times
-
-# <codecell>
-
 aux, exs = cse(heun, optimizations='basic', order='none')
 for l, r in aux:
     print l, '<-', r
 for u, ex in zip(ddt.keys(), exs):
     print u, '<-', ex
 
-# <markdowncell>
 
-# Then we can generate a looping kernel for OpenCL like this
 
-# <codecell>
-
+# Here we want to change the kernel
 template = '''
-__kernel void integrate(__global float *X, __global float *DX, float dt, float a, float tau)
+function([X, DX, dt, a, tau], [X])
 {{
     int step;
     {decl}
@@ -87,11 +62,11 @@ kernel = template.format(
 
 print kernel
 
-# <markdowncell>
+
 
 # Of course this is only for one node, no delays or noise or connectivity. Also can do this just with strings:
 
-# <codecell>
+
 
 system = '''
 dx = tau*(x - x**3/3 + y)
@@ -106,11 +81,11 @@ for lhs, rhs in [line.split('=') for line in system.split('\n') if line]:
     
 ddt2
 
-# <markdowncell>
+
 
 # Then we can have just a translating function
 
-# <codecell>
+
 
 def translate(system, nstep=100):
     """
@@ -152,11 +127,11 @@ def translate(system, nstep=100):
         loop=loop
     )
 
-# <markdowncell>
+
 
 # et voila
 
-# <codecell>
+
 
 print translate('''
 dx = tau*(x - x**3/3 + y)
@@ -164,11 +139,11 @@ dy = (a - x + b*y + c*y**2)/tau
 dz = x + y + z + x*y*z
 ''')
 
-# <markdowncell>
+
 
 # Hm, it automatically changed the order of `x, z, y` but that's because `ddt` is a `dict` which doesn't keep track of order.
 
-# <markdowncell>
+
 
 # `Integrator` can inspect the `Model` to find out state variable names, parameter names, and equations. 
 # 
@@ -178,6 +153,6 @@ dz = x + y + z + x*y*z
 # 
 # OK Not bad.
 
-# <codecell>
+
 
 
