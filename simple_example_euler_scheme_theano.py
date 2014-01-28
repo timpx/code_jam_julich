@@ -2,14 +2,14 @@
 from theano import *
 import theano.tensor as T
 
-x = T.dscalar()
-dt = T.dscalar()
-dx = T.dscalar()
+x = T.dscalar("x")
+dt = T.dscalar("dt")
 
-result, updates = scan(fn=lambda x, dx, dt: x + dx*dt, 
-							  outputs_info=T.dscalar(),
-							  non_sequences=dt, 
+result, updates = scan(fn=lambda x, dt : x + dt, 
+							  outputs_info=None,
+							  non_sequences= dt,
 							  n_steps = 10)
-f = function(inputs=[dx, dt], outputs=result, updates=updates)
 
-print f(3., 1., 1.)
+f = function(inputs=[x, dt], outputs=result, updates=updates)
+
+print f( 2., 1.)

@@ -40,7 +40,7 @@ function([X, DX, dt, Param(a, default=, tau], [X])
     int step;
     {decl}
 
-    for (step=0; step<{nstep}; step++)
+    theano.scan()(step=0; step<{nstep}; step++)
     {{
         {loop}
     }}
